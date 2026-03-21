@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import WasteBatchListCreateView, WasteBatchDetailView, BatchStatusUpdateView, QRTokenDetailView
+from .views import WasteListCreateView, WasteDetailView, StatusUpdateView, QRDetailView
 
 urlpatterns = [
-    path('', WasteBatchListCreateView.as_view(), name='batch-list'),
-    path('<uuid:pk>/', WasteBatchDetailView.as_view(), name='batch-detail'),
-    path('<uuid:pk>/status/', BatchStatusUpdateView.as_view(), name='batch-status'),
-    path('<uuid:pk>/qr/', QRTokenDetailView.as_view(), name='batch-qr'),
+    path('',                  WasteListCreateView.as_view(), name='waste-list'),
+    path('<uuid:pk>/',        WasteDetailView.as_view(),     name='waste-detail'),
+    path('<uuid:pk>/status/', StatusUpdateView.as_view(),    name='waste-status'),
+    path('<uuid:pk>/qr/',     QRDetailView.as_view(),        name='waste-qr'),
 ]

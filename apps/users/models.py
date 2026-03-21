@@ -1,64 +1,95 @@
-import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
+from apps.organizations.models import Organization
+
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError('Email обязателен')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+    def create_user(self, login, password=None, **extra_fields):
+        if not login:
+            raise ValueError('Логин обязателен')
+        user = self.model(login=login, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password=None, **extra_fields):
+    def create_superuser(self, login, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'ADMIN')
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(login, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """USER: id, full_name, role, password, org_id, login"""
     ROLE_CHOICES = [
-        ('EDUCATOR', 'Образователь'),
-        ('DRIVER', 'Водитель'),
-        ('PROCESSOR', 'Переработчик'),
+        ('RECYCLER',  'Образователь'),
+        ('DRIVER',    'Водитель'),
+        ('MEDICAL', 'Переработчик'),
         ('INSPECTOR', 'Инспектор'),
-        ('ADMIN', 'Администратор'),
+        ('ADMIN',     'Администратор'),
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True)
-    full_name = models.CharField(max_length=255)
-    role = models.CharField(max_length=16, choices=ROLE_CHOICES)
+    full_name = models.CharField(max_length=255, verbose_name='ФИО')
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, verbose_name='Роль')
+    # password хранится в AbstractBaseUser
     organization = models.ForeignKey(
-        'organizations.Organization', null=True, blank=True,
-        on_delete=models.SET_NULL, related_name='users'
+        Organization,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='users',
+        verbose_name='Организация',
     )
+    login = models.CharField(max_length=150, unique=True, verbose_name='Логин')
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD  = 'login'
     REQUIRED_FIELDS = []
-    objects = UserManager()
+    objects         = UserManager()
 
     class Meta:
         db_table = 'user'
 
     def __str__(self):
-        return f'{self.email} ({self.role})'
+        return f'{self.login} ({self.role})'
 
 
 class DriverProfile(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='driver_profile')
-    vehicle_number = models.CharField(max_length=64)
+    """ВОД: id, номер ТС"""
+    vehicle_number = models.CharField(max_length=64, verbose_name='Номер ТС')
 
     class Meta:
-        db_table = 'driver_profile'
+        db_table = 'vod'
 
     def __str__(self):
-        return f'{self.user.full_name} - {self.vehicle_number}'
+        return f'{self.vehicle_number}'
+
+
+class MedicalOrganization(models.Model):
+    """ОБР: id, лицензия, адрес"""
+    license_number = models.CharField(max_length=128, verbose_name='Лицензия')
+    address = models.CharField(max_length=500, verbose_name='Адрес')
+
+    class Meta:
+        db_table = 'obr'
+
+    def __str__(self):
+        return f'Образователь: {self.license_number}'
+
+
+class Recycler(models.Model):
+    """ПЕРЕРАБОТЧИК: id, номер лиц., адр. пл., сп. водит."""
+    license_number = models.CharField(max_length=128, verbose_name='Номер лицензии')
+    facility_address = models.CharField(max_length=500, verbose_name='Адрес площадки')
+    drivers = models.ManyToManyField(
+        DriverProfile,
+        blank=True,
+        related_name='recyclers',
+        verbose_name='Список водителей',
+    )
+
+    class Meta:
+        db_table = 'pererabotchik'
+
+    def __str__(self):
+        return f'Переработчик: {self.license_number}'

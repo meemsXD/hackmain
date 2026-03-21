@@ -1,9 +1,7 @@
-import uuid
 from django.db import models
 
 
 class AuditLog(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         'users.User', null=True, blank=True,
         on_delete=models.SET_NULL, related_name='audit_logs'

@@ -1,56 +1,51 @@
+import secrets
 from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from apps.organizations.models import Organization, EducatorProfile, ProcessorProfile
-from apps.batches.models import WasteBatch, BatchStatus, QRToken
-import secrets
+from apps.users.models import User, DriverProfile, MedicalOrganization, Recycler
+from apps.organizations.models import Organization
+from apps.batches.models import Waste, Status, QR
 
-User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Создать демо-данные'
+    help = 'Seed demo data'
 
-    def handle(self, *args, **kwargs):
-        edu_org, _ = Organization.objects.get_or_create(inn='7700000001', kpp='770001001', defaults={'name': 'Клиника Демо'})
-        proc_org, _ = Organization.objects.get_or_create(inn='7700000002', kpp='770002002', defaults={'name': 'Переработчик Демо'})
-        EducatorProfile.objects.get_or_create(organization=edu_org, defaults={'license_number': 'LIC-EDU-001', 'pickup_address': 'Москва, ул. Больничная, 10'})
-        ProcessorProfile.objects.get_or_create(organization=proc_org, defaults={'license_number': 'LIC-PROC-001', 'facility_address': 'Москва, ул. Заводская, 2'})
+    def handle(self, *args, **options):
+        edu_org,  _ = Organization.objects.get_or_create(inn='1234567890', kpp='123456789', defaults={'name': 'Клиника №1'})
+        proc_org, _ = Organization.objects.get_or_create(inn='0987654321', kpp='987654321', defaults={'name': 'Переработчик ООО'})
 
-        admin, _ = User.objects.get_or_create(email='admin@example.com', defaults={'full_name': 'Администратор', 'role': 'ADMIN', 'is_staff': True, 'is_superuser': True})
-        if not admin.check_password('admin12345'):
-            admin.set_password('admin12345'); admin.save()
+        edu_user, created = User.objects.get_or_create(login='educator1', defaults={
+            'full_name': 'Иванов Иван Иванович', 'role': 'EDUCATOR', 'organization': edu_org,
+        })
+        if created:
+            edu_user.set_password('pass123')
+            edu_user.save()
+            MedicalOrganization.objects.create(user=edu_user, license_number='LIC-EDU-001', address='Москва, ул. Больничная, 10')
 
-        educator, _ = User.objects.get_or_create(email='educator@example.com', defaults={'full_name': 'Образователь Демо', 'role': 'EDUCATOR', 'organization': edu_org})
-        if not educator.check_password('educator12345'):
-            educator.set_password('educator12345'); educator.save()
+        driver, created = User.objects.get_or_create(login='driver1', defaults={
+            'full_name': 'Петров Пётр Петрович', 'role': 'DRIVER', 'organization': proc_org,
+        })
+        if created:
+            driver.set_password('pass123')
+            driver.save()
+            DriverProfile.objects.create(user=driver, vehicle_number='А123АА77')
 
-        processor, _ = User.objects.get_or_create(email='processor@example.com', defaults={'full_name': 'Переработчик Демо', 'role': 'PROCESSOR', 'organization': proc_org})
-        if not processor.check_password('processor12345'):
-            processor.set_password('processor12345'); processor.save()
+        proc, created = User.objects.get_or_create(login='processor1', defaults={
+            'full_name': 'Сидоров Сидор Сидорович', 'role': 'PROCESSOR', 'organization': proc_org,
+        })
+        if created:
+            proc.set_password('pass123')
+            proc.save()
+            pp = Recycler.objects.create(user=proc, license_number='LIC-PROC-001', facility_address='Москва, ул. Заводская, 2')
+            pp.drivers.add(driver)
 
-        driver, _ = User.objects.get_or_create(email='driver@example.com', defaults={'full_name': 'Водитель Демо', 'role': 'DRIVER', 'organization': proc_org})
-        if not driver.check_password('driver12345'):
-            driver.set_password('driver12345'); driver.save()
-        from apps.users.models import DriverProfile
-        DriverProfile.objects.get_or_create(user=driver, defaults={'vehicle_number': 'А123АА77'})
-
-        batch1, created = WasteBatch.objects.get_or_create(
-            educator=edu_org, waste_type='medicines',
-            defaults={'quantity': 12.5, 'unit': 'kg', 'pickup_address': 'Москва, ул. Больничная, 10', 'delivery_address': 'Москва, ул. Заводская, 2', 'status': 'CREATED'}
+        waste1, created = Waste.objects.get_or_create(
+            educator=edu_user, waste_type='medicines',
+            defaults={'quantity': 12.5, 'pickup_point': 'Москва, ул. Больничная, 10', 'delivery_point': 'Москва, ул. Заводская, 2'}
         )
         if created:
-            BatchStatus.objects.create(batch=batch1, status='CREATED')
-            token = QRToken.objects.create(batch=batch1, code=secrets.token_urlsafe(16), expires_at=timezone.now() + timedelta(days=2), is_active=True)
-            self.stdout.write(self.style.SUCCESS(f'Партия 1: QR={token.code}'))
+            Status.objects.create(waste=waste1, state='CREATED')
+            QR.objects.create(waste=waste1, code=secrets.token_urlsafe(16),
+                              time=timezone.now() + timedelta(days=2), is_active=True)
 
-        batch2, created = WasteBatch.objects.get_or_create(
-            educator=edu_org, waste_type='disinfectants',
-            defaults={'quantity': 7.25, 'unit': 'l', 'pickup_address': 'Москва, ул. Больничная, 10', 'delivery_address': 'Москва, ул. Заводская, 2', 'status': 'IN_TRANSIT'}
-        )
-        if created:
-            BatchStatus.objects.create(batch=batch2, status='CREATED')
-            BatchStatus.objects.create(batch=batch2, status='IN_TRANSIT')
-            self.stdout.write(self.style.SUCCESS('Партия 2: в пути'))
-
-        self.stdout.write(self.style.SUCCESS('Демо-данные созданы.'))
+        self.stdout.write(self.style.SUCCESS('Demo data seeded.'))
