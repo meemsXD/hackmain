@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Merriweather:wght@700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg-main: #f4faf8;
+  --bg-surface: #ffffff;
+  --fg-main: #173e3a;
+  --fg-muted: #4f6f6b;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--fg-main);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(102, 208, 195, 0.24), transparent 38%),
+    radial-gradient(circle at 92% 88%, rgba(241, 141, 53, 0.2), transparent 44%),
+    var(--bg-main);
+  font-family: Manrope, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.surface {
+  @apply rounded-2xl bg-white shadow-surface ring-1 ring-brand-100;
+}
+
+.page-title {
+  @apply font-heading text-2xl text-brand-900 md:text-3xl;
+}
+
+.page-subtitle {
+  @apply mt-2 text-sm text-brand-700 md:text-base;
+}

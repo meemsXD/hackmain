@@ -60,11 +60,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         if user.role == 'DRIVER' and vehicle_number:
-            DriverProfile.objects.create(user=user, vehicle_number=vehicle_number)
-        elif user.role == 'EDUCATOR' and license_number:
-            MedicalOrganization.objects.create(user=user, license_number=license_number, address=address or '')
-        elif user.role == 'PROCESSOR' and license_number:
-            Recycler.objects.create(user=user, license_number=license_number, facility_address=facility_address or '')
+            DriverProfile.objects.create(vehicle_number=vehicle_number)
+        elif user.role == 'RECYCLER' and license_number:
+            MedicalOrganization.objects.create(license_number=license_number, address=address or '')
+        elif user.role == 'MEDICAL' and license_number:
+            Recycler.objects.create(license_number=license_number, facility_address=facility_address or '')
 
         return user
 
