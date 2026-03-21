@@ -1,1 +1,0 @@
-# verhoviya_project
