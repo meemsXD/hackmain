@@ -58,11 +58,27 @@ paths:
       operationId: v1_auth_logout_create
       tags:
       - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logout'
+          description: ''
   /api/v1/auth/me:
     get:
       operationId: v1_auth_me_retrieve
@@ -231,11 +247,27 @@ paths:
         required: true
       tags:
       - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusUpdate'
+          description: ''
   /api/v1/organizations/:
     get:
       operationId: v1_organizations_list
@@ -451,6 +483,13 @@ components:
       required:
       - id
       - vehicle_number
+    Logout:
+      type: object
+      properties:
+        refresh:
+          type: string
+      required:
+      - refresh
     MedicalOrganization:
       type: object
       properties:
@@ -585,24 +624,23 @@ components:
         id:
           type: integer
           readOnly: true
-        time:
-          type: string
-          format: date-time
-          title: Время (срок действия)
         waste:
           type: integer
-          title: Id_отходов
+          title: Партия
         code:
           type: string
           title: Код
-          maxLength: 32
+          maxLength: 64
+        expires_at:
+          type: string
+          format: date-time
+          title: Срок действия
         is_active:
           type: boolean
           title: Активность
       required:
       - code
       - id
-      - time
       - waste
     Recycler:
       type: object
@@ -677,6 +715,20 @@ components:
         * `MEDICAL` - Переработчик
         * `INSPECTOR` - Инспектор
         * `ADMIN` - Администратор
+    StateEnum:
+      enum:
+      - CREATED
+      - IN_TRANSIT
+      - DELIVERED
+      - ACCEPTED
+      - CANCELLED
+      type: string
+      description: |-
+        * `CREATED` - Создана
+        * `IN_TRANSIT` - В пути
+        * `DELIVERED` - Доставлена
+        * `ACCEPTED` - Принята переработчиком
+        * `CANCELLED` - Отменена
     Status:
       type: object
       properties:
@@ -684,9 +736,9 @@ components:
           type: integer
           readOnly: true
         state:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/StateEnum'
           title: Состояние
-          maxLength: 64
         time:
           type: string
           format: date-time
@@ -694,12 +746,20 @@ components:
           title: Время
         waste:
           type: integer
-          title: Id_отходов
+          title: Партия
       required:
       - id
       - state
       - time
       - waste
+    StatusUpdate:
+      type: object
+      properties:
+        state:
+          type: string
+          maxLength: 64
+      required:
+      - state
     TokenRefresh:
       type: object
       properties:
@@ -777,7 +837,7 @@ components:
           maxLength: 500
         delivery_point:
           type: integer
-          title: Образователь
+          title: Переработчик
         statuses:
           type: array
           items:
@@ -817,7 +877,7 @@ components:
           maxLength: 500
         delivery_point:
           type: integer
-          title: Образователь
+          title: Переработчик
       required:
       - delivery_point
       - medical_organization

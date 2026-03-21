@@ -11,7 +11,7 @@ class StatusSerializer(serializers.ModelSerializer):
 class QRSerializer(serializers.ModelSerializer):
     class Meta:
         model  = QR
-        fields = ['id', 'time', 'waste', 'code', 'is_active']
+        fields = ['id', 'waste', 'code', 'expires_at', 'is_active']
 
 
 class WasteSerializer(serializers.ModelSerializer):
