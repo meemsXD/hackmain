@@ -33,6 +33,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'login', 'full_name', 'role', 'organization',
                   'driver_profile', 'educator_profile', 'processor_profile']
 
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True)

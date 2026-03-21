@@ -27,6 +27,8 @@ class WasteDetailView(generics.RetrieveAPIView):
 
 
 class StatusUpdateView(APIView):
+    serializer_class = StatusUpdateSerializer
+
     def post(self, request, pk):
         waste      = get_object_or_404(Waste, pk=pk)
         serializer = StatusUpdateSerializer(data=request.data)

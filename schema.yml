@@ -1,0 +1,831 @@
+openapi: 3.0.3
+info:
+  title: Waste Class G API
+  version: 1.0.0
+paths:
+  /api/v1/audit/:
+    get:
+      operationId: v1_audit_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/v1/auth/login:
+    post:
+      operationId: v1_auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomTokenObtainPair'
+          description: ''
+  /api/v1/auth/logout:
+    post:
+      operationId: v1_auth_logout_create
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/me:
+    get:
+      operationId: v1_auth_me_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/auth/refresh:
+    post:
+      operationId: v1_auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/auth/register:
+    post:
+      operationId: v1_auth_register_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
+  /api/v1/batches/:
+    get:
+      operationId: v1_batches_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWasteList'
+          description: ''
+    post:
+      operationId: v1_batches_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WasteCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WasteCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WasteCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WasteCreate'
+          description: ''
+  /api/v1/batches/{id}/:
+    get:
+      operationId: v1_batches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Waste'
+          description: ''
+  /api/v1/batches/{id}/qr/:
+    get:
+      operationId: v1_batches_qr_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QR'
+          description: ''
+  /api/v1/batches/{id}/status/:
+    post:
+      operationId: v1_batches_status_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/organizations/:
+    get:
+      operationId: v1_organizations_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrganizationList'
+          description: ''
+    post:
+      operationId: v1_organizations_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Organization'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Organization'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
+  /api/v1/organizations/{id}/:
+    get:
+      operationId: v1_organizations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
+    put:
+      operationId: v1_organizations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Organization'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Organization'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
+    patch:
+      operationId: v1_organizations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganization'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganization'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganization'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
+    delete:
+      operationId: v1_organizations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          nullable: true
+        user_email:
+          type: string
+          readOnly: true
+        action:
+          type: string
+          title: Действие
+          maxLength: 128
+        object_type:
+          type: string
+          title: Тип объекта
+          maxLength: 64
+        object_id:
+          type: string
+          title: ID объекта
+          maxLength: 64
+        before:
+          nullable: true
+          title: До
+        after:
+          nullable: true
+          title: После
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Время
+      required:
+      - action
+      - created_at
+      - id
+      - object_id
+      - object_type
+      - user_email
+    CustomTokenObtainPair:
+      type: object
+      properties:
+        login:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - login
+      - password
+    DriverProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        vehicle_number:
+          type: string
+          title: Номер ТС
+          maxLength: 64
+      required:
+      - id
+      - vehicle_number
+    MedicalOrganization:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        license_number:
+          type: string
+          title: Лицензия
+          maxLength: 128
+        address:
+          type: string
+          title: Адрес
+          maxLength: 500
+      required:
+      - address
+      - id
+      - license_number
+    Organization:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        inn:
+          type: string
+          title: ИНН
+          maxLength: 12
+        kpp:
+          type: string
+          title: КПП
+          maxLength: 9
+        name:
+          type: string
+          title: Название
+          maxLength: 255
+      required:
+      - id
+      - inn
+      - kpp
+      - name
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedOrganizationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+    PaginatedWasteList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Waste'
+    PatchedOrganization:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        inn:
+          type: string
+          title: ИНН
+          maxLength: 12
+        kpp:
+          type: string
+          title: КПП
+          maxLength: 9
+        name:
+          type: string
+          title: Название
+          maxLength: 255
+    QR:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        time:
+          type: string
+          format: date-time
+          title: Время (срок действия)
+        waste:
+          type: integer
+          title: Id_отходов
+        code:
+          type: string
+          title: Код
+          maxLength: 32
+        is_active:
+          type: boolean
+          title: Активность
+      required:
+      - code
+      - id
+      - time
+      - waste
+    Recycler:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        license_number:
+          type: string
+          title: Номер лицензии
+          maxLength: 128
+        facility_address:
+          type: string
+          title: Адрес площадки
+          maxLength: 500
+        drivers:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+      required:
+      - drivers
+      - facility_address
+      - id
+      - license_number
+    Register:
+      type: object
+      properties:
+        login:
+          type: string
+          title: Логин
+          maxLength: 150
+        full_name:
+          type: string
+          title: ФИО
+          maxLength: 255
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Роль
+        organization:
+          type: integer
+          nullable: true
+          title: Организация
+        password:
+          type: string
+          writeOnly: true
+        vehicle_number:
+          type: string
+        license_number:
+          type: string
+        address:
+          type: string
+        facility_address:
+          type: string
+      required:
+      - full_name
+      - login
+      - password
+      - role
+    RoleEnum:
+      enum:
+      - RECYCLER
+      - DRIVER
+      - MEDICAL
+      - INSPECTOR
+      - ADMIN
+      type: string
+      description: |-
+        * `RECYCLER` - Образователь
+        * `DRIVER` - Водитель
+        * `MEDICAL` - Переработчик
+        * `INSPECTOR` - Инспектор
+        * `ADMIN` - Администратор
+    Status:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        state:
+          type: string
+          title: Состояние
+          maxLength: 64
+        time:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Время
+        waste:
+          type: integer
+          title: Id_отходов
+      required:
+      - id
+      - state
+      - time
+      - waste
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        login:
+          type: string
+          title: Логин
+          maxLength: 150
+        full_name:
+          type: string
+          title: ФИО
+          maxLength: 255
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Роль
+        organization:
+          type: integer
+          nullable: true
+          title: Организация
+        driver_profile:
+          allOf:
+          - $ref: '#/components/schemas/DriverProfile'
+          readOnly: true
+        educator_profile:
+          allOf:
+          - $ref: '#/components/schemas/MedicalOrganization'
+          readOnly: true
+        processor_profile:
+          allOf:
+          - $ref: '#/components/schemas/Recycler'
+          readOnly: true
+      required:
+      - driver_profile
+      - educator_profile
+      - full_name
+      - id
+      - login
+      - processor_profile
+      - role
+    Waste:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        waste_type:
+          type: string
+          title: Тип
+          maxLength: 128
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Кол-во
+        medical_organization:
+          type: integer
+          title: Образователь
+        pickup_point:
+          type: string
+          title: Точка вывоза
+          maxLength: 500
+        delivery_point:
+          type: integer
+          title: Образователь
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Status'
+          readOnly: true
+        qr:
+          allOf:
+          - $ref: '#/components/schemas/QR'
+          readOnly: true
+      required:
+      - delivery_point
+      - id
+      - medical_organization
+      - pickup_point
+      - qr
+      - quantity
+      - statuses
+      - waste_type
+    WasteCreate:
+      type: object
+      properties:
+        waste_type:
+          type: string
+          title: Тип
+          maxLength: 128
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Кол-во
+        medical_organization:
+          type: integer
+          title: Образователь
+        pickup_point:
+          type: string
+          title: Точка вывоза
+          maxLength: 500
+        delivery_point:
+          type: integer
+          title: Образователь
+      required:
+      - delivery_point
+      - medical_organization
+      - pickup_point
+      - quantity
+      - waste_type
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

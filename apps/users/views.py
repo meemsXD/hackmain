@@ -4,8 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from apps.audit.models import log
-from .models import User
-from .serializers import RegisterSerializer, UserSerializer, CustomTokenObtainPairSerializer
+from .serializers import RegisterSerializer, UserSerializer, CustomTokenObtainPairSerializer, LogoutSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -31,6 +30,8 @@ class LoginView(TokenObtainPairView):
 
 
 class LogoutView(APIView):
+    serializer_class = LogoutSerializer
+
     def post(self, request):
         try:
             RefreshToken(request.data.get('refresh')).blacklist()

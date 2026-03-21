@@ -16,18 +16,18 @@ class QRSerializer(serializers.ModelSerializer):
 
 class WasteSerializer(serializers.ModelSerializer):
     statuses = StatusSerializer(many=True, read_only=True)
-    qr       = QRSerializer(read_only=True)
+    qr  = QRSerializer(read_only=True)
 
     class Meta:
         model  = Waste
-        fields = ['id', 'waste_type', 'quantity', 'educator',
+        fields = ['id', 'waste_type', 'quantity', 'medical_organization',
                   'pickup_point', 'delivery_point', 'statuses', 'qr']
 
 
 class WasteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Waste
-        fields = ['waste_type', 'quantity', 'educator', 'pickup_point', 'delivery_point']
+        fields = ['waste_type', 'quantity', 'medical_organization', 'pickup_point', 'delivery_point']
 
     def create(self, validated_data):
         waste = Waste.objects.create(**validated_data)
