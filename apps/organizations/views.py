@@ -1,16 +1,29 @@
 from rest_framework import generics, permissions
-from .models import Organization
-from .serializers import OrganizationSearchSerializer
+from .models import Organization, EducatorProfile, ProcessorProfile
+from .serializers import OrganizationSerializer, EducatorProfileSerializer, ProcessorProfileSerializer
 
-class OrganizationSearchView(generics.ListAPIView):
-    serializer_class = OrganizationSearchSerializer
+
+class OrganizationListCreateView(generics.ListCreateAPIView):
+    serializer_class = OrganizationSerializer
+    queryset = Organization.objects.all()
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+
+class OrganizationDetailView(generics.RetrieveAPIView):
+    serializer_class = OrganizationSerializer
+    queryset = Organization.objects.all()
     permission_classes = [permissions.AllowAny]
-    search_fields = ['name', 'inn', 'kpp']
 
-    def get_queryset(self):
-        qs = Organization.objects.all().order_by('name')
-        q = self.request.query_params.get('q')
-        if q:
-            from django.db.models import Q
-            qs = qs.filter(Q(name__icontains=q) | Q(inn__icontains=q) | Q(kpp__icontains=q))
-        return qs.distinct()
+
+class EducatorProfileListView(generics.ListAPIView):
+    serializer_class = EducatorProfileSerializer
+    queryset = EducatorProfile.objects.select_related('organization')
+
+
+class ProcessorProfileListView(generics.ListAPIView):
+    serializer_class = ProcessorProfileSerializer
+    queryset = ProcessorProfile.objects.select_related('organization').prefetch_related('drivers')

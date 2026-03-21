@@ -1,10 +1,15 @@
 from django.contrib import admin
-from .models import WasteBatch, BatchStatusHistory
+from .models import WasteBatch, BatchStatus, QRToken
 
 @admin.register(WasteBatch)
 class WasteBatchAdmin(admin.ModelAdmin):
-    list_display = ('batch_number', 'status', 'creator_org', 'processor_org', 'created_at')
-    list_filter = ('status', 'unit')
-    search_fields = ('batch_number', 'creator_org__name', 'processor_org__name')
+    list_display = ['waste_type', 'quantity', 'unit', 'educator', 'created_at']
+    list_filter = ['waste_type']
 
-admin.site.register(BatchStatusHistory)
+@admin.register(BatchStatus)
+class BatchStatusAdmin(admin.ModelAdmin):
+    list_display = ['batch', 'status', 'changed_at']
+
+@admin.register(QRToken)
+class QRTokenAdmin(admin.ModelAdmin):
+    list_display = ['batch', 'code', 'expires_at', 'is_active']

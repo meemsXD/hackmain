@@ -1,71 +1,59 @@
+import secrets
+import string
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework import serializers
-from apps.common.enums import BatchStatusChoices, UnitChoices
-from apps.organizations.models import Organization
-from apps.directory.models import WasteType
-from apps.access.models import QRAccessToken, TokenAccessAttempt
-from apps.chat.models import ChatThread
-from .models import WasteBatch, BatchStatusHistory
+from .models import WasteBatch, BatchStatus, QRToken
 
-class BatchStatusHistorySerializer(serializers.ModelSerializer):
-    changed_by_name = serializers.CharField(source='changed_by.full_name', read_only=True)
+
+class BatchStatusSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BatchStatusHistory
-        fields = ['id', 'from_status', 'to_status', 'changed_by_name', 'reason', 'created_at']
+        model = BatchStatus
+        fields = ['id', 'status', 'changed_at']
+
+
+class QRTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QRToken
+        fields = ['id', 'code', 'expires_at', 'is_active']
+
 
 class WasteBatchSerializer(serializers.ModelSerializer):
-    waste_type_name = serializers.CharField(source='waste_type.name', read_only=True)
-    creator_organization_name = serializers.CharField(source='creator_org.name', read_only=True)
-    processor_organization_name = serializers.CharField(source='processor_org.name', read_only=True)
-    current_driver_name = serializers.CharField(source='current_driver.full_name', read_only=True)
-    token_expires_at = serializers.SerializerMethodField()
-    manual_code = serializers.SerializerMethodField()
-    raw_token = serializers.SerializerMethodField()
+    statuses = BatchStatusSerializer(many=True, read_only=True)
+    qr_token = QRTokenSerializer(read_only=True)
+    educator_name = serializers.CharField(source='educator.name', read_only=True)
 
     class Meta:
         model = WasteBatch
-        fields = [
-            'id', 'batch_number', 'waste_type', 'waste_type_name', 'quantity', 'unit', 'creator_org',
-            'creator_organization_name', 'pickup_address', 'processor_org', 'processor_organization_name',
-            'delivery_address_snapshot', 'current_driver', 'current_driver_name', 'status', 'comment',
-            'created_at', 'picked_up_at', 'delivered_at', 'accepted_at', 'cancelled_at', 'token_expires_at', 'manual_code', 'raw_token'
-        ]
-        read_only_fields = ['id', 'batch_number', 'creator_org', 'status', 'created_at', 'picked_up_at', 'delivered_at', 'accepted_at', 'cancelled_at']
+        fields = ['id', 'waste_type', 'quantity', 'unit', 'educator', 'educator_name',
+                  'pickup_address', 'delivery_address', 'created_at', 'statuses', 'qr_token']
+        read_only_fields = ['id', 'created_at']
 
-    def get_token_expires_at(self, obj):
-        token = getattr(obj, 'access_token', None)
-        return token.expires_at if token else None
 
-    def get_manual_code(self, obj):
-        token = getattr(obj, 'access_token', None)
-        return token.manual_code if token else None
-
-    def get_raw_token(self, obj):
-        token = getattr(obj, 'access_token', None)
-        return getattr(obj, 'raw_token', None) or getattr(token, 'raw_token', None)
-
-class EducatorBatchCreateSerializer(serializers.Serializer):
-    waste_type = serializers.PrimaryKeyRelatedField(queryset=WasteType.objects.filter(is_active=True))
-    quantity = serializers.DecimalField(max_digits=12, decimal_places=2)
-    unit = serializers.ChoiceField(choices=UnitChoices.choices)
-    pickup_address = serializers.CharField(max_length=500)
-    processor_org = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
-    comment = serializers.CharField(required=False, allow_blank=True)
-    token_expires_at = serializers.DateTimeField()
-    signature_token = serializers.CharField(write_only=True)
-
-class EducatorBatchUpdateSerializer(serializers.ModelSerializer):
-    token_expires_at = serializers.DateTimeField(required=False, write_only=True)
-    signature_token = serializers.CharField(write_only=True)
+class WasteBatchCreateSerializer(serializers.ModelSerializer):
+    token_expires_hours = serializers.IntegerField(write_only=True, default=24, min_value=1, max_value=168)
 
     class Meta:
         model = WasteBatch
-        fields = ['waste_type', 'quantity', 'unit', 'pickup_address', 'processor_org', 'comment', 'current_driver', 'token_expires_at', 'signature_token']
+        fields = ['waste_type', 'quantity', 'unit', 'educator', 'pickup_address', 'delivery_address', 'token_expires_hours']
 
-class ExtendTokenSerializer(serializers.Serializer):
-    expires_at = serializers.DateTimeField()
-    signature_token = serializers.CharField()
+    def create(self, validated_data):
+        from apps.audit.models import log
+        hours = validated_data.pop('token_expires_hours', 24)
+        batch = WasteBatch.objects.create(**validated_data)
+        BatchStatus.objects.create(batch=batch, status='CREATED')
+        code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+        code = f'{code[:3]}-{code[3:6]}-{code[6:]}'
+        QRToken.objects.create(
+            batch=batch,
+            code=code,
+            expires_at=timezone.now() + timedelta(hours=hours),
+        )
+        request = self.context.get('request')
+        if request:
+            log(request.user, 'batch_created', 'waste_batch', str(batch.id), after={'waste_type': batch.waste_type})
+        return batch
 
-class BlockedAttemptSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TokenAccessAttempt
-        fields = ['id', 'success', 'failure_reason', 'ip', 'user_agent', 'created_at']
+
+class BatchStatusUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=['IN_TRANSIT', 'ACCEPTED', 'CANCELLED'])

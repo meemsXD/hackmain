@@ -1,22 +1,22 @@
 from rest_framework import serializers
-from .models import Organization, EducatorOrgProfile, ProcessorOrgProfile
+from .models import Organization, EducatorProfile, ProcessorProfile
+
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'inn', 'kpp', 'legal_address', 'status']
+        fields = ['id', 'name', 'inn', 'kpp', 'created_at']
 
-class OrganizationSearchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Organization
-        fields = ['id', 'name', 'inn', 'kpp', 'status']
 
-class EducatorOrgProfileSerializer(serializers.ModelSerializer):
+class EducatorProfileSerializer(serializers.ModelSerializer):
+    organization = OrganizationSerializer(read_only=True)
     class Meta:
-        model = EducatorOrgProfile
-        fields = ['waste_license_number', 'default_pickup_address']
+        model = EducatorProfile
+        fields = ['id', 'organization', 'license_number', 'pickup_address']
 
-class ProcessorOrgProfileSerializer(serializers.ModelSerializer):
+
+class ProcessorProfileSerializer(serializers.ModelSerializer):
+    organization = OrganizationSerializer(read_only=True)
     class Meta:
-        model = ProcessorOrgProfile
-        fields = ['recycling_license_number', 'facility_address']
+        model = ProcessorProfile
+        fields = ['id', 'organization', 'license_number', 'facility_address', 'drivers']
