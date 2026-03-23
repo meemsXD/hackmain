@@ -77,3 +77,7 @@ export function setSignatureToken(value: string): void {
 export function getSignatureToken(): string {
   return readStorage(SIGNATURE_KEY);
 }
+
+export function clearSignatureToken(): void {
+  writeStorage(SIGNATURE_KEY, '');
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getBatch, updateBatchStatus } from '@/api/batches';
@@ -8,6 +8,7 @@ import { BatchTimeline, ChatPanel, SignatureConfirmModal, StatusBadge } from '@/
 import { Badge, Button, ErrorState, Loader } from '@/components/ui';
 import { useBatchChat } from '@/features/chat/useBatchChat';
 import { formatDateTime, isExpired } from '@/utils/date';
+import { getBatchLatestStatus, getQrExpiry } from '@/utils/batches';
 
 type PendingAction = 'pickup' | 'delivered' | null;
 
@@ -34,10 +35,10 @@ export function DriverBatchDetailPage() {
     if (!batch) {
       return 'CREATED';
     }
-    return batch.statuses[batch.statuses.length - 1]?.state ?? 'CREATED';
+    return getBatchLatestStatus(batch);
   }, [batch]);
 
-  const tokenExpired = isExpired(batch?.qr?.time ?? null) || !batch?.qr?.is_active;
+  const tokenExpired = isExpired(getQrExpiry(batch?.qr)) || !batch?.qr?.is_active;
   const canPickup = latestStatus === 'CREATED' && !tokenExpired;
   const canDelivered = ['IN_TRANSIT', 'DELIVERED'].includes(latestStatus) && !tokenExpired;
 
@@ -51,15 +52,15 @@ export function DriverBatchDetailPage() {
 
   const executeAction = async (token: string) => {
     if (signatureToken && signatureToken !== token) {
-      setActionError('Токен подписи не совпадает с сохраненным в профиле.');
+      setActionError('Токен подписи не совпадает с токеном в вашем профиле.');
       return;
     }
 
-    const status = pendingAction === 'pickup' ? 'IN_TRANSIT' : 'DELIVERED';
+    const nextStatus = pendingAction === 'pickup' ? 'IN_TRANSIT' : 'DELIVERED';
 
     try {
       setActionError('');
-      await statusMutation.mutateAsync(status);
+      await statusMutation.mutateAsync(nextStatus);
     } catch (error) {
       setActionError(getApiErrorMessage(error));
     } finally {
@@ -73,7 +74,7 @@ export function DriverBatchDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="page-title">Карточка водителя: партия #{batch.id}</h1>
-            <p className="page-subtitle">Фактическое подтверждение забора и доставки.</p>
+            <p className="page-subtitle">Подтверждение забора и отметка о доставке на переработку.</p>
           </div>
           <StatusBadge status={latestStatus} />
         </div>
@@ -85,11 +86,16 @@ export function DriverBatchDetailPage() {
           <p>
             <span className="font-semibold">Количество:</span> {batch.quantity}
           </p>
+          {batch.created_by ? (
+            <p>
+              <span className="font-semibold">Создатель:</span> user:{batch.created_by}
+            </p>
+          ) : null}
           <p className="md:col-span-2">
             <span className="font-semibold">Адрес вывоза:</span> {batch.pickup_point}
           </p>
           <p>
-            <span className="font-semibold">Срок доступа:</span> {formatDateTime(batch.qr?.time ?? null)}
+            <span className="font-semibold">Срок доступа:</span> {formatDateTime(getQrExpiry(batch.qr))}
           </p>
         </div>
 
@@ -100,7 +106,7 @@ export function DriverBatchDetailPage() {
           <Button variant="secondary" disabled={!canDelivered} onClick={() => setPendingAction('delivered')}>
             Отметить доставку
           </Button>
-          {tokenExpired ? <Badge tone="danger">Токен доступа истек: действия заблокированы</Badge> : null}
+          {tokenExpired ? <Badge tone="danger">Срок действия QR истек: действия заблокированы</Badge> : null}
         </div>
         {actionError ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
       </article>
@@ -113,7 +119,7 @@ export function DriverBatchDetailPage() {
         <aside className="surface p-4">
           <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-700">Подсказка</h3>
           <p className="text-sm text-brand-800">
-            Перед критичным действием система запрашивает токен подписи. Он сохраняется в профиле и проверяется на клиенте.
+            Критичные действия подтверждаются токеном подписи. Токен создается автоматически и доступен в вашем профиле.
           </p>
         </aside>
       </div>

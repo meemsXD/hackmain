@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listAllBatches } from '@/api/batches';
-import { Button, EmptyState, ErrorState, Input, Loader, Select, Table } from '@/components/ui';
 import { StatusBadge } from '@/components/shared';
+import { Button, EmptyState, ErrorState, Input, Loader, Select, Table } from '@/components/ui';
 import { formatDateTime } from '@/utils/date';
+import { getBatchLatestStatus, getBatchLatestStatusTime } from '@/utils/batches';
 
 function downloadCsv(content: string, name: string) {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
@@ -26,7 +27,7 @@ export function EducatorReportsPage() {
   const filtered = useMemo(() => {
     const source = batchesQuery.data ?? [];
     return source.filter((item) => {
-      const latest = item.statuses[item.statuses.length - 1]?.state ?? '';
+      const latest = getBatchLatestStatus(item);
       const byType = wasteType ? item.waste_type.toLowerCase().includes(wasteType.toLowerCase()) : true;
       const byStatus = status ? latest === status : true;
       return byType && byStatus;
@@ -36,15 +37,16 @@ export function EducatorReportsPage() {
   const exportCsv = () => {
     const lines = ['id,waste_type,quantity,pickup_point,status,updated_at'];
     filtered.forEach((item) => {
-      const latest = item.statuses[item.statuses.length - 1];
+      const latestStatus = getBatchLatestStatus(item);
+      const latestTime = getBatchLatestStatusTime(item);
       lines.push(
         [
           item.id,
           `"${item.waste_type.replaceAll('"', '""')}"`,
           item.quantity,
           `"${item.pickup_point.replaceAll('"', '""')}"`,
-          latest?.state ?? '',
-          latest?.time ?? '',
+          latestStatus,
+          latestTime ?? '',
         ].join(','),
       );
     });
@@ -67,7 +69,7 @@ export function EducatorReportsPage() {
     <section className="space-y-4">
       <article className="surface p-5">
         <h1 className="page-title">Отчеты образователя</h1>
-        <p className="page-subtitle">Фильтрация и экспорт сводки по партиям.</p>
+        <p className="page-subtitle">Фильтрация и экспорт сводки по партиям в CSV.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
           <Input label="Тип отходов" value={wasteType} onChange={(event) => setWasteType(event.target.value)} />
           <Select
@@ -99,12 +101,12 @@ export function EducatorReportsPage() {
             {
               key: 'status',
               title: 'Статус',
-              render: (item) => <StatusBadge status={item.statuses[item.statuses.length - 1]?.state ?? 'CREATED'} />,
+              render: (item) => <StatusBadge status={getBatchLatestStatus(item)} />,
             },
             {
               key: 'updated',
               title: 'Последнее обновление',
-              render: (item) => formatDateTime(item.statuses[item.statuses.length - 1]?.time ?? null),
+              render: (item) => formatDateTime(getBatchLatestStatusTime(item)),
             },
           ]}
         />

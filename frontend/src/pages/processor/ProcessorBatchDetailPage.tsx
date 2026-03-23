@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getBatch, updateBatchStatus } from '@/api/batches';
@@ -8,6 +8,7 @@ import { BatchTimeline, ChatPanel, SignatureConfirmModal, StatusBadge } from '@/
 import { Badge, Button, ErrorState, Loader } from '@/components/ui';
 import { useBatchChat } from '@/features/chat/useBatchChat';
 import { formatDateTime } from '@/utils/date';
+import { getBatchLatestStatus, getQrExpiry } from '@/utils/batches';
 
 export function ProcessorBatchDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -28,9 +29,11 @@ export function ProcessorBatchDetailPage() {
   const { messages } = useBatchChat(id, user?.full_name ?? 'Переработчик', false);
 
   const latestStatus = useMemo(() => {
-    const statuses = batchQuery.data?.statuses ?? [];
-    return statuses[statuses.length - 1]?.state ?? 'CREATED';
-  }, [batchQuery.data?.statuses]);
+    if (!batchQuery.data) {
+      return 'CREATED';
+    }
+    return getBatchLatestStatus(batchQuery.data);
+  }, [batchQuery.data]);
 
   if (batchQuery.isLoading) {
     return <Loader label="Загружаем партию..." />;
@@ -63,7 +66,7 @@ export function ProcessorBatchDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="page-title">Приемка партии #{batch.id}</h1>
-            <p className="page-subtitle">Финальное подтверждение переработчиком.</p>
+            <p className="page-subtitle">Финальное подтверждение получения отходов переработчиком.</p>
           </div>
           <StatusBadge status={latestStatus} />
         </div>
@@ -74,11 +77,16 @@ export function ProcessorBatchDetailPage() {
           <p>
             <span className="font-semibold">Количество:</span> {batch.quantity}
           </p>
+          {batch.created_by ? (
+            <p>
+              <span className="font-semibold">Создатель:</span> user:{batch.created_by}
+            </p>
+          ) : null}
           <p>
             <span className="font-semibold">Адрес вывоза:</span> {batch.pickup_point}
           </p>
           <p>
-            <span className="font-semibold">QR срок:</span> {formatDateTime(batch.qr?.time ?? null)}
+            <span className="font-semibold">QR срок:</span> {formatDateTime(getQrExpiry(batch.qr))}
           </p>
         </div>
 
@@ -86,7 +94,7 @@ export function ProcessorBatchDetailPage() {
           <Button onClick={() => setConfirmOpen(true)} disabled={!canAccept || acceptMutation.isPending}>
             Подтвердить приемку
           </Button>
-          <Badge tone="warning">Чат для переработчика в MVP доступен только на чтение</Badge>
+          <Badge tone="warning">Чат переработчика в MVP доступен только для чтения</Badge>
         </div>
         {actionError ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
       </article>

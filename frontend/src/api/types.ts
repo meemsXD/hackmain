@@ -20,6 +20,31 @@ export type ProcessorProfile = {
   drivers: number[];
 };
 
+export type RecyclerOption = {
+  id: number;
+  license_number: string;
+  facility_address: string;
+  organization_id: number | null;
+  organization_name?: string | null;
+  user_id?: number | null;
+};
+
+export type ProcessorDriverCard = {
+  id: number;
+  vehicle_number: string;
+  user_id?: number;
+  user_login?: string;
+  user_full_name?: string;
+};
+
+export type CreateProcessorDriverPayload = {
+  vehicle_number: string;
+  full_name?: string;
+  login?: string;
+  password?: string;
+  organization?: number;
+};
+
 export type User = {
   id: number;
   login: string;
@@ -71,14 +96,19 @@ export type BatchStatus = {
   state: string;
   time: string;
   waste: number;
+  changed_by?: number | null;
 };
 
 export type BatchQr = {
   id: number;
-  time: string;
   waste: number;
   code: string;
   is_active: boolean;
+  expires_at?: string;
+  // Legacy compatibility for older backend snapshots.
+  time?: string;
+  created_by?: number | null;
+  is_expired?: boolean;
 };
 
 export type WasteBatch = {
@@ -90,6 +120,8 @@ export type WasteBatch = {
   delivery_point: number;
   statuses: BatchStatus[];
   qr: Nullable<BatchQr>;
+  current_status?: string;
+  created_by?: number | null;
 };
 
 export type CreateWasteBatchPayload = {
@@ -98,10 +130,30 @@ export type CreateWasteBatchPayload = {
   medical_organization: number;
   pickup_point: string;
   delivery_point: number;
+  qr_expires_hours?: number;
 };
 
 export type UpdateStatusPayload = {
   state: string;
+};
+
+export type QrScanPayload = {
+  code: string;
+};
+
+export type QrScanResponse = {
+  batch: WasteBatch;
+  qr: BatchQr;
+};
+
+export type QrScanLog = {
+  id: number;
+  qr: number | null;
+  raw_code: string;
+  scanned_by: number | null;
+  scanned_at: string;
+  success: boolean;
+  fail_reason: string;
 };
 
 export type AuditLog = {

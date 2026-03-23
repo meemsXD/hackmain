@@ -25,6 +25,9 @@ const schema = z
     facility_address: z.string().optional(),
   })
   .superRefine((value, ctx) => {
+    if (value.role === 'DRIVER' && !value.vehicle_number?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['vehicle_number'], message: 'Укажите номер ТС' });
+    }
     if (value.role === 'RECYCLER') {
       if (!value.license_number?.trim()) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['license_number'], message: 'Нужен номер лицензии' });
@@ -100,6 +103,10 @@ export function RegisterPage() {
         organization: values.organization ? Number(values.organization) : null,
       };
 
+      if (values.role === 'DRIVER' && values.vehicle_number?.trim()) {
+        payload.vehicle_number = values.vehicle_number.trim();
+      }
+
       if (values.role === 'RECYCLER') {
         if (values.license_number?.trim()) {
           payload.license_number = values.license_number.trim();
@@ -150,8 +157,7 @@ export function RegisterPage() {
           {role === 'DRIVER' ? (
             <div className="md:col-span-2">
               <Input
-                label="Номер ТС (опционально)"
-                hint="Временный обход: поле не отправляется на backend из-за ошибки модели водителя."
+                label="Номер ТС"
                 error={form.formState.errors.vehicle_number?.message}
                 {...form.register('vehicle_number')}
               />

@@ -1,12 +1,31 @@
 venv/
+.venv/
+.venv_linux/
 __pycache__/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+htmlcov/
 .env
+.env.local
+.env.*.local
 db.sqlite3
 .DS_Store
+.Thumbs.db
 .idea/
 .vscode/
 *.log
 secrets/
 Python-3.12.0
 
+# Frontend artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+frontend/.env.local
+frontend/.env.*.local

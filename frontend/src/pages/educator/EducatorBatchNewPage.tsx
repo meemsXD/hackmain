@@ -1,42 +1,74 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createBatch, listAllBatches } from '@/api/batches';
+import { createBatch } from '@/api/batches';
 import { getApiErrorMessage } from '@/api/client';
-import { Button, ErrorState, Input, Select } from '@/components/ui';
+import { listAvailableRecyclers } from '@/api/users';
+import { useAuth } from '@/auth/useAuth';
+import { Button, EmptyState, ErrorState, Input, Select } from '@/components/ui';
 
 const schema = z.object({
-  waste_type: z.string().min(2, 'Укажите тип отходов'),
+  waste_type: z.string().trim().min(1, 'Укажите тип отходов'),
   quantity: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Формат: 0.00'),
-  medical_organization: z.string().min(1, 'Укажите id образовательной организации'),
+  medical_organization: z.string().min(1, 'Профиль образователя не найден'),
   pickup_point: z.string().min(5, 'Укажите адрес вывоза'),
-  delivery_point: z.string().min(1, 'Укажите id переработчика'),
+  delivery_point: z.string().min(1, 'Выберите переработчика'),
+  qr_expires_hours: z
+    .string()
+    .regex(/^\d+$/, 'Укажите число')
+    .refine((value) => {
+      const hours = Number(value);
+      return Number.isInteger(hours) && hours >= 1 && hours <= 168;
+    }, 'От 1 до 168 часов'),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export function EducatorBatchNewPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formError, setFormError] = useState('');
 
-  const hintsQuery = useQuery({
-    queryKey: ['batches', 'hints'],
-    queryFn: () => listAllBatches(5),
+  const recyclersQuery = useQuery({
+    queryKey: ['recyclers', 'available', 'educator'],
+    queryFn: listAvailableRecyclers,
   });
+
+  const medicalOrgId = user?.educator_profile?.id ? String(user.educator_profile.id) : '';
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       waste_type: '',
       quantity: '',
-      medical_organization: '',
+      medical_organization: medicalOrgId,
       pickup_point: '',
       delivery_point: '',
+      qr_expires_hours: '24',
     },
   });
+
+  useEffect(() => {
+    if (medicalOrgId) {
+      form.setValue('medical_organization', medicalOrgId, { shouldValidate: true });
+    }
+  }, [form, medicalOrgId]);
+
+  const recyclerOptions = useMemo(() => {
+    return (recyclersQuery.data ?? []).map((item) => ({
+      value: String(item.id),
+      label: `ID ${item.id} · ${item.license_number} · ${item.facility_address}`,
+    }));
+  }, [recyclersQuery.data]);
+
+  useEffect(() => {
+    if (recyclerOptions.length === 1 && !form.getValues('delivery_point')) {
+      form.setValue('delivery_point', recyclerOptions[0].value, { shouldValidate: true });
+    }
+  }, [form, recyclerOptions]);
 
   const createMutation = useMutation({
     mutationFn: createBatch,
@@ -45,71 +77,73 @@ export function EducatorBatchNewPage() {
     },
   });
 
-  const options = useMemo(() => {
-    const source = hintsQuery.data ?? [];
-    const medicalIds = [...new Set(source.map((item) => item.medical_organization))];
-    const deliveryIds = [...new Set(source.map((item) => item.delivery_point))];
-    return {
-      medicalIds,
-      deliveryIds,
-    };
-  }, [hintsQuery.data]);
-
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError('');
     try {
       await createMutation.mutateAsync({
-        waste_type: values.waste_type,
+        waste_type: values.waste_type.trim(),
         quantity: values.quantity,
-        medical_organization: Number(values.medical_organization),
-        pickup_point: values.pickup_point,
+        medical_organization: Number(medicalOrgId || values.medical_organization),
+        pickup_point: values.pickup_point.trim(),
         delivery_point: Number(values.delivery_point),
+        qr_expires_hours: Number(values.qr_expires_hours),
       });
     } catch (error) {
       setFormError(getApiErrorMessage(error));
     }
   });
 
+  if (!medicalOrgId) {
+    return (
+      <EmptyState
+        title="Профиль образователя не настроен"
+        description="Для создания партии в аккаунте должен быть заполнен профиль образователя (лицензия и адрес)."
+      />
+    );
+  }
+
   return (
     <section className="surface p-5">
       <h1 className="page-title">Создание партии</h1>
-      <p className="page-subtitle">Форма валидируется на клиенте и отправляет данные напрямую в backend.</p>
+      <p className="page-subtitle">При создании партии автоматически формируется QR-токен с выбранным сроком действия.</p>
 
-      {hintsQuery.isError ? (
+      {recyclersQuery.isError ? (
         <div className="mt-4">
-          <ErrorState title="Не удалось загрузить подсказки" description="Можно заполнить id вручную и сохранить партию." />
+          <ErrorState
+            title="Не удалось загрузить переработчиков"
+            description="Можно ввести ID переработчика вручную, но лучше обновить страницу и проверить доступы вашей организации."
+          />
         </div>
       ) : null}
 
       <form className="mt-5 grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
         <Input label="Тип отходов" error={form.formState.errors.waste_type?.message} {...form.register('waste_type')} />
         <Input label="Количество" error={form.formState.errors.quantity?.message} {...form.register('quantity')} />
+
         <div className="md:col-span-2">
           <Input label="Адрес вывоза" error={form.formState.errors.pickup_point?.message} {...form.register('pickup_point')} />
         </div>
-        <div className="space-y-2">
-          <Input
-            label="ID образовательной организации"
-            type="number"
-            error={form.formState.errors.medical_organization?.message}
-            {...form.register('medical_organization')}
-          />
-          <Select
-            label="Подставить из существующих"
-            placeholder="Не выбрано"
-            options={options.medicalIds.map((id) => ({ value: String(id), label: `ID ${id}` }))}
-            onChange={(event) => form.setValue('medical_organization', event.target.value)}
-            value=""
-          />
-        </div>
+
+        <Input label="ID вашей образовательной организации" value={medicalOrgId} readOnly />
+
         <div className="space-y-2">
           <Input label="ID переработчика" type="number" error={form.formState.errors.delivery_point?.message} {...form.register('delivery_point')} />
           <Select
-            label="Подставить из существующих"
+            label="Выбрать из доступных"
             placeholder="Не выбрано"
-            options={options.deliveryIds.map((id) => ({ value: String(id), label: `ID ${id}` }))}
-            onChange={(event) => form.setValue('delivery_point', event.target.value)}
-            value=""
+            options={recyclerOptions}
+            onChange={(event) => form.setValue('delivery_point', event.target.value, { shouldValidate: true })}
+            value={form.watch('delivery_point') || ''}
+          />
+          <p className="text-xs text-brand-700">Показываются переработчики, доступные в рамках вашей организации.</p>
+        </div>
+
+        <div className="md:col-span-2">
+          <Input
+            label="Срок действия QR (часы, 1-168)"
+            type="number"
+            error={form.formState.errors.qr_expires_hours?.message}
+            {...form.register('qr_expires_hours')}
           />
         </div>
 
@@ -123,3 +157,4 @@ export function EducatorBatchNewPage() {
     </section>
   );
 }
+

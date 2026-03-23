@@ -4,8 +4,8 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key')
-DEBUG = os.getenv('DJANGO_DEBUG', '0') == '1'
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+DEBUG = os.getenv('DJANGO_DEBUG', '1') == '1'
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,11 +53,12 @@ ASGI_APPLICATION = 'config.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'waste_mvp',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '5434',
+        'NAME': os.getenv('POSTGRES_DB', os.getenv('DB_NAME', 'waste_mvp')),
+        'USER': os.getenv('POSTGRES_USER', os.getenv('DB_USER', 'postgres')),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', os.getenv('DB_PASSWORD', '1234')),
+        'HOST': os.getenv('POSTGRES_HOST', os.getenv('DB_HOST', 'localhost')),
+        'PORT': os.getenv('POSTGRES_PORT', os.getenv('DB_PORT', '5434')),
+        'CONN_MAX_AGE': int(os.getenv('POSTGRES_CONN_MAX_AGE', '60')),
     }
 }
 

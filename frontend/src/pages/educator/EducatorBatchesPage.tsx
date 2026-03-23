@@ -1,16 +1,17 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+﻿import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listBatches } from '@/api/batches';
 import { StatusBadge } from '@/components/shared';
 import { Button, EmptyState, ErrorState, Input, Loader, Pagination, Table } from '@/components/ui';
 import { formatDateTime } from '@/utils/date';
+import { getBatchLatestStatus, getBatchLatestStatusTime } from '@/utils/batches';
 
 export function EducatorBatchesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const goToCreateBatch = () => navigate('/app/educator/batches/new');
 
   const batchesQuery = useQuery({
     queryKey: ['batches', 'educator', page],
@@ -39,9 +40,9 @@ export function EducatorBatchesPage() {
     return (
       <EmptyState
         title="Партии пока не созданы"
-        description="Создайте первую партию и выдайте QR-код для водителя."
+        description="Создайте первую партию и выдайте водителю QR-код доступа."
         actionText="Создать партию"
-        onAction={() => navigate('/app/educator/batches/new')}
+        onAction={goToCreateBatch}
       />
     );
   }
@@ -51,12 +52,12 @@ export function EducatorBatchesPage() {
       <article className="surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="page-title">Партии образовательной организации</h1>
-            <p className="page-subtitle">Список партий, QR-доступ и ключевые статусы движения.</p>
+            <h1 className="page-title">Партии образователя</h1>
+            <p className="page-subtitle">Просмотр статусов, QR-доступа и ключевых параметров партии.</p>
           </div>
-          <Link to="/app/educator/batches/new">
-            <Button>Создать партию</Button>
-          </Link>
+          <Button type="button" onClick={goToCreateBatch}>
+            Создать партию
+          </Button>
         </div>
 
         <div className="mt-4 max-w-md">
@@ -76,12 +77,12 @@ export function EducatorBatchesPage() {
             {
               key: 'status',
               title: 'Статус',
-              render: (item) => <StatusBadge status={item.statuses[item.statuses.length - 1]?.state ?? 'CREATED'} />,
+              render: (item) => <StatusBadge status={getBatchLatestStatus(item)} />,
             },
             {
               key: 'updated',
               title: 'Обновлено',
-              render: (item) => formatDateTime(item.statuses[item.statuses.length - 1]?.time ?? null),
+              render: (item) => formatDateTime(getBatchLatestStatusTime(item)),
             },
             {
               key: 'action',

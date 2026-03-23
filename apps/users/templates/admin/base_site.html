@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/custom_admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+  <div class="mw-branding">
+    <h1 id="site-name"><a href="{% url 'admin:index' %}">MedWaste Admin</a></h1>
+    <p class="mw-subtitle">Управление ролями, организациями и партиями</p>
+  </div>
+{% endblock %}

@@ -12,6 +12,7 @@ import { login as loginApi, logout as logoutApi, me, refresh, register as regist
 import type { LoginPayload, RegisterPayload, User } from '@/api/types';
 import {
   clearSessionTokens,
+  clearSignatureToken,
   clearStoredUser,
   getRefreshToken,
   getSignatureToken,
@@ -43,6 +44,15 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 function clearAllSession() {
   clearSessionTokens();
   clearStoredUser();
+  clearSignatureToken();
+}
+
+function generateSignatureToken(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const randomBytes = new Uint8Array(10);
+  crypto.getRandomValues(randomBytes);
+  const token = Array.from(randomBytes, (value) => alphabet[value % alphabet.length]).join('');
+  return `SIG-${token}`;
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -51,13 +61,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
   const [signatureToken, setSignatureTokenState] = useState<string>(() => getSignatureToken());
 
+  const ensureSignatureToken = useCallback((value?: string) => {
+    const existing = value ?? signatureToken;
+    if (existing) {
+      return existing;
+    }
+    const generated = generateSignatureToken();
+    setSignatureTokenState(generated);
+    setSignatureToken(generated);
+    return generated;
+  }, [signatureToken]);
+
   const hydrateUser = useCallback(async () => {
     const currentUser = await me();
     setUser(currentUser);
     setStoredUser(currentUser);
     const roles = getUserRoles(currentUser);
     setStatus(roles.length ? 'authenticated' : 'forbidden');
-  }, []);
+    ensureSignatureToken();
+  }, [ensureSignatureToken]);
 
   const refreshTokens = useCallback(async () => {
     const refreshToken = getRefreshToken();
@@ -113,8 +135,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const tokens = await loginApi(payload);
       setSessionTokens(tokens.access, tokens.refresh);
       await hydrateUser();
+      ensureSignatureToken();
     },
-    [hydrateUser],
+    [hydrateUser, ensureSignatureToken],
   );
 
   const register = useCallback(
@@ -126,12 +149,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUser(response.user);
         setStoredUser(response.user);
         setStatus(getUserRoles(response.user).length ? 'authenticated' : 'forbidden');
+        ensureSignatureToken();
         return;
       }
       setSessionTokens(response.access, response.refresh);
       await hydrateUser();
+      ensureSignatureToken();
     },
-    [hydrateUser],
+    [hydrateUser, ensureSignatureToken],
   );
 
   const logout = useCallback(async () => {
@@ -145,6 +170,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
     clearAllSession();
     setUser(null);
+    setSignatureTokenState('');
     setStatus('unauthenticated');
   }, []);
 

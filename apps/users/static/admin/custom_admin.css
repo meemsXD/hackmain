@@ -1,0 +1,84 @@
+:root {
+  --mw-primary: #0f766e;
+  --mw-primary-strong: #115e59;
+  --mw-soft: #f0fdfa;
+  --mw-surface: #ffffff;
+}
+
+#header {
+  background: linear-gradient(90deg, #0f766e, #14532d);
+  color: #f8fafc;
+}
+
+#header a:link,
+#header a:visited {
+  color: #f8fafc;
+}
+
+.mw-branding {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mw-subtitle {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.95;
+}
+
+div.breadcrumbs {
+  background: #ecfeff;
+  color: #134e4a;
+}
+
+div.breadcrumbs a {
+  color: #0f766e;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+  background: var(--mw-primary);
+}
+
+.button,
+input[type=submit],
+input[type=button],
+.submit-row input,
+a.button {
+  background: var(--mw-primary);
+  border-radius: 8px;
+  border: 0;
+}
+
+.button:hover,
+input[type=submit]:hover,
+input[type=button]:hover,
+.submit-row input:hover,
+a.button:hover {
+  background: var(--mw-primary-strong);
+}
+
+#content-main .module {
+  background: var(--mw-surface);
+  border: 1px solid #d1fae5;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.08);
+}
+
+body.login #container {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(20, 83, 45, 0.2);
+}
+
+body.login #header {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+body.login .form-row {
+  margin-bottom: 14px;
+}

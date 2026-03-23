@@ -6,10 +6,10 @@
 
 :root {
   color-scheme: light;
-  --bg-main: #f4faf8;
+  --bg-main: #edf6f3;
   --bg-surface: #ffffff;
-  --fg-main: #173e3a;
-  --fg-muted: #4f6f6b;
+  --fg-main: #163d39;
+  --fg-muted: #4a6a66;
 }
 
 body {
@@ -17,10 +17,16 @@ body {
   min-height: 100vh;
   color: var(--fg-main);
   background:
-    radial-gradient(circle at 8% 10%, rgba(102, 208, 195, 0.24), transparent 38%),
-    radial-gradient(circle at 92% 88%, rgba(241, 141, 53, 0.2), transparent 44%),
+    radial-gradient(circle at 9% 12%, rgba(69, 178, 162, 0.32), transparent 40%),
+    radial-gradient(circle at 90% 88%, rgba(238, 145, 62, 0.24), transparent 42%),
+    radial-gradient(circle at 72% 18%, rgba(24, 118, 108, 0.12), transparent 34%),
     var(--bg-main);
   font-family: Manrope, sans-serif;
+  background-attachment: fixed;
+}
+
+*::selection {
+  background: rgba(34, 143, 130, 0.2);
 }
 
 #root {
@@ -28,7 +34,7 @@ body {
 }
 
 .surface {
-  @apply rounded-2xl bg-white shadow-surface ring-1 ring-brand-100;
+  @apply rounded-3xl bg-white/95 shadow-surface ring-1 ring-brand-100/90 backdrop-blur-sm;
 }
 
 .page-title {
@@ -36,5 +42,5 @@ body {
 }
 
 .page-subtitle {
-  @apply mt-2 text-sm text-brand-700 md:text-base;
+  @apply mt-2 max-w-3xl text-sm text-brand-700 md:text-base;
 }

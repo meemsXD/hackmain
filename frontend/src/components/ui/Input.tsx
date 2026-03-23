@@ -17,7 +17,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         className={clsx(
-          'h-10 w-full rounded-xl border border-brand-200 bg-white px-3 text-sm text-brand-900 outline-none ring-brand-300 transition focus:ring-2',
+          'h-11 w-full rounded-xl border border-brand-200/90 bg-white px-3 text-sm text-brand-900 outline-none ring-brand-300 transition duration-150 focus:border-brand-300 focus:ring-2',
           error && 'border-red-400 focus:ring-red-200',
           className,
         )}

@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { listAllBatches } from '@/api/batches';
 import { listAuditLogs } from '@/api/audit';
+import { listAllBatches } from '@/api/batches';
 import { Button, ErrorState, Loader, Table } from '@/components/ui';
+import { getBatchLatestStatus } from '@/utils/batches';
 
 type SummaryRow = {
   key: string;
@@ -36,7 +37,7 @@ export function InspectorReportsPage() {
     const logs = auditQuery.data?.results ?? [];
 
     const statusCount = batches.reduce<Record<string, number>>((acc, batch) => {
-      const latest = batch.statuses[batch.statuses.length - 1]?.state ?? 'UNKNOWN';
+      const latest = getBatchLatestStatus(batch);
       acc[latest] = (acc[latest] ?? 0) + 1;
       return acc;
     }, {});
@@ -74,7 +75,7 @@ export function InspectorReportsPage() {
     <section className="space-y-4">
       <article className="surface p-5">
         <h1 className="page-title">Отчеты инспектора</h1>
-        <p className="page-subtitle">Сводка по партиям и журналу. Экспортируется в CSV/JSON.</p>
+        <p className="page-subtitle">Сводка по партиям и журналу с экспортом в CSV/JSON.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={exportCsv}>Экспорт CSV</Button>
           <Button variant="secondary" onClick={exportJson}>

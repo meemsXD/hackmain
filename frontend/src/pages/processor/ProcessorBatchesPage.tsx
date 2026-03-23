@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listAllBatches } from '@/api/batches';
 import { StatusBadge } from '@/components/shared';
 import { EmptyState, ErrorState, Input, Loader, Select, Table } from '@/components/ui';
+import { getBatchLatestStatus } from '@/utils/batches';
 
 export function ProcessorBatchesPage() {
   const [status, setStatus] = useState('');
@@ -17,7 +18,7 @@ export function ProcessorBatchesPage() {
   const filtered = useMemo(() => {
     const source = query.data ?? [];
     return source.filter((item) => {
-      const latest = item.statuses[item.statuses.length - 1]?.state ?? '';
+      const latest = getBatchLatestStatus(item);
       const byStatus = status ? latest === status : true;
       const bySearch = search ? item.waste_type.toLowerCase().includes(search.toLowerCase()) || String(item.id).includes(search) : true;
       return byStatus && bySearch;
@@ -33,7 +34,7 @@ export function ProcessorBatchesPage() {
   }
 
   if (!filtered.length) {
-    return <EmptyState title="Входящих партий нет" description="Измените фильтр или дождитесь новых поставок." />;
+    return <EmptyState title="Входящих партий нет" description="Измените фильтры или дождитесь новых поставок." />;
   }
 
   return (
@@ -67,7 +68,7 @@ export function ProcessorBatchesPage() {
             { key: 'type', title: 'Тип отходов', render: (item) => item.waste_type },
             { key: 'quantity', title: 'Количество', render: (item) => item.quantity },
             { key: 'pickup', title: 'Адрес вывоза', render: (item) => item.pickup_point },
-            { key: 'status', title: 'Статус', render: (item) => <StatusBadge status={item.statuses[item.statuses.length - 1]?.state ?? 'CREATED'} /> },
+            { key: 'status', title: 'Статус', render: (item) => <StatusBadge status={getBatchLatestStatus(item)} /> },
             {
               key: 'action',
               title: 'Действие',

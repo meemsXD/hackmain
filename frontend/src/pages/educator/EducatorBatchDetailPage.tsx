@@ -1,19 +1,22 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getBatch, getBatchQr, updateBatchStatus } from '@/api/batches';
+import { extendBatchQr, getBatch, getBatchQr, listBatchQrLogs, updateBatchStatus } from '@/api/batches';
 import { getApiErrorMessage } from '@/api/client';
 import { BatchTimeline, BlockedAttemptsTable, ChatPanel, QrCodeCard, SignatureConfirmModal, StatusBadge } from '@/components/shared';
-import { Badge, Button, ErrorState, Loader } from '@/components/ui';
+import { Badge, Button, ErrorState, Input, Loader } from '@/components/ui';
 import { useAuth } from '@/auth/useAuth';
 import { useBatchChat } from '@/features/chat/useBatchChat';
 import { formatDateTime } from '@/utils/date';
+import { getBatchLatestStatus, getQrExpiry } from '@/utils/batches';
 
 export function EducatorBatchDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const { user, signatureToken } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [extendError, setExtendError] = useState('');
+  const [extendHours, setExtendHours] = useState('24');
 
   const batchQuery = useQuery({
     queryKey: ['batch', id, 'educator'],
@@ -26,17 +29,34 @@ export function EducatorBatchDetailPage() {
     enabled: Boolean(id),
   });
 
+  const logsQuery = useQuery({
+    queryKey: ['batch', id, 'qr', 'logs'],
+    queryFn: () => listBatchQrLogs(id, true),
+    enabled: Boolean(id),
+  });
+
   const statusMutation = useMutation({
     mutationFn: (state: string) => updateBatchStatus(id, { state }),
     onSuccess: () => void batchQuery.refetch(),
   });
 
+  const extendMutation = useMutation({
+    mutationFn: (hours: number) => extendBatchQr(id, hours),
+    onSuccess: async () => {
+      setExtendError('');
+      await qrQuery.refetch();
+      await logsQuery.refetch();
+    },
+  });
+
   const { messages, sendMessage } = useBatchChat(id, user?.full_name ?? 'Образователь', true);
 
   const latestStatus = useMemo(() => {
-    const statuses = batchQuery.data?.statuses ?? [];
-    return statuses[statuses.length - 1]?.state ?? 'CREATED';
-  }, [batchQuery.data?.statuses]);
+    if (!batchQuery.data) {
+      return 'CREATED';
+    }
+    return getBatchLatestStatus(batchQuery.data);
+  }, [batchQuery.data]);
 
   if (batchQuery.isLoading) {
     return <Loader label="Загружаем карточку партии..." />;
@@ -47,6 +67,12 @@ export function EducatorBatchDetailPage() {
   }
 
   const batch = batchQuery.data;
+  const blockedAttempts = (logsQuery.data ?? []).map((item) => ({
+    id: String(item.id),
+    code: item.raw_code,
+    reason: item.fail_reason || 'ACCESS_BLOCKED',
+    createdAt: item.scanned_at,
+  }));
 
   const cancelBatch = async (token: string) => {
     if (signatureToken && signatureToken !== token) {
@@ -61,13 +87,28 @@ export function EducatorBatchDetailPage() {
     }
   };
 
+  const handleExtendQr = async () => {
+    const hours = Number(extendHours);
+    if (!Number.isInteger(hours) || hours < 1 || hours > 168) {
+      setExtendError('Укажите срок от 1 до 168 часов.');
+      return;
+    }
+
+    try {
+      setExtendError('');
+      await extendMutation.mutateAsync(hours);
+    } catch (error) {
+      setExtendError(getApiErrorMessage(error));
+    }
+  };
+
   return (
     <section className="space-y-4">
       <article className="surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="page-title">Карточка партии #{batch.id}</h1>
-            <p className="page-subtitle">Просмотр, отмена, QR и коммуникация с водителем.</p>
+            <p className="page-subtitle">Управление QR-доступом, статусом и коммуникацией с водителем.</p>
           </div>
           <StatusBadge status={latestStatus} />
         </div>
@@ -85,11 +126,16 @@ export function EducatorBatchDetailPage() {
           <p>
             <span className="font-semibold">ID переработчика:</span> {batch.delivery_point}
           </p>
+          {batch.created_by ? (
+            <p>
+              <span className="font-semibold">Создатель:</span> user:{batch.created_by}
+            </p>
+          ) : null}
           <p className="md:col-span-2">
             <span className="font-semibold">Адрес вывоза:</span> {batch.pickup_point}
           </p>
           <p>
-            <span className="font-semibold">QR срок:</span> {formatDateTime(qrQuery.data?.time ?? batch.qr?.time ?? null)}
+            <span className="font-semibold">QR срок:</span> {formatDateTime(getQrExpiry(qrQuery.data ?? batch.qr))}
           </p>
         </div>
 
@@ -97,9 +143,17 @@ export function EducatorBatchDetailPage() {
           <Button variant="danger" onClick={() => setModalOpen(true)} disabled={latestStatus === 'CANCELLED'}>
             Отменить партию
           </Button>
-          <Badge tone="warning">Редактирование партии в текущем backend API не предусмотрено</Badge>
+          <Badge tone="warning">Редактирование полей партии в текущем API не предусмотрено</Badge>
         </div>
         {actionError ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
+
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+          <Input label="Продлить QR (часы, 1-168)" type="number" value={extendHours} onChange={(event) => setExtendHours(event.target.value)} />
+          <Button variant="secondary" onClick={() => void handleExtendQr()} loading={extendMutation.isPending}>
+            Продлить QR
+          </Button>
+        </div>
+        {extendError ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{extendError}</p> : null}
       </article>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
@@ -111,7 +165,9 @@ export function EducatorBatchDetailPage() {
           <QrCodeCard qr={qrQuery.data ?? batch.qr} />
           <div className="surface p-4">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand-700">Заблокированные попытки</h3>
-            <BlockedAttemptsTable items={[]} />
+            {logsQuery.isLoading ? <Loader label="Загружаем лог QR..." /> : null}
+            {logsQuery.isError ? <p className="text-sm text-red-700">Не удалось загрузить лог QR.</p> : null}
+            {!logsQuery.isLoading && !logsQuery.isError ? <BlockedAttemptsTable items={blockedAttempts} /> : null}
           </div>
         </div>
       </div>

@@ -15,12 +15,12 @@ type TableProps<T> = {
 
 export function Table<T>({ columns, data, rowKey }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-brand-100">
+    <div className="overflow-x-auto rounded-2xl border border-brand-100">
       <table className="w-full min-w-[760px] border-collapse bg-white text-left text-sm">
-        <thead className="bg-brand-50 text-brand-800">
+        <thead className="bg-brand-50/70 text-brand-800">
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={`px-3 py-2 font-semibold ${column.className ?? ''}`}>
+              <th key={column.key} className={`px-3 py-2.5 font-semibold ${column.className ?? ''}`}>
                 {column.title}
               </th>
             ))}
@@ -28,9 +28,9 @@ export function Table<T>({ columns, data, rowKey }: TableProps<T>) {
         </thead>
         <tbody>
           {data.map((row) => (
-            <tr key={rowKey(row)} className="border-t border-brand-100 text-brand-900">
+            <tr key={rowKey(row)} className="border-t border-brand-100 text-brand-900 transition hover:bg-brand-50/40">
               {columns.map((column) => (
-                <td key={column.key} className={`px-3 py-2 align-top ${column.className ?? ''}`}>
+                <td key={column.key} className={`px-3 py-2.5 align-top ${column.className ?? ''}`}>
                   {column.render(row)}
                 </td>
               ))}

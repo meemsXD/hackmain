@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listBatches } from '@/api/batches';
 import { StatusBadge } from '@/components/shared';
 import { EmptyState, ErrorState, Loader, Pagination, Table } from '@/components/ui';
 import { formatDateTime } from '@/utils/date';
+import { getBatchLatestStatus, getBatchLatestStatusTime } from '@/utils/batches';
 
 const ACTIVE_STATES = ['CREATED', 'IN_TRANSIT', 'DELIVERED'];
 
@@ -18,7 +19,7 @@ export function DriverBatchesPage() {
 
   const active = useMemo(() => {
     const rows = query.data?.results ?? [];
-    return rows.filter((item) => ACTIVE_STATES.includes(item.statuses[item.statuses.length - 1]?.state ?? 'CREATED'));
+    return rows.filter((item) => ACTIVE_STATES.includes(getBatchLatestStatus(item)));
   }, [query.data?.results]);
 
   if (query.isLoading) {
@@ -30,14 +31,14 @@ export function DriverBatchesPage() {
   }
 
   if (!active.length) {
-    return <EmptyState title="Активных партий нет" description="Как только образователь создаст партию и выдаст вам доступ, она появится здесь." />;
+    return <EmptyState title="Активных партий нет" description="Когда образователь выдаст доступ по QR, партия появится здесь." />;
   }
 
   return (
     <section className="space-y-4">
       <article className="surface p-5">
         <h1 className="page-title">Мои активные партии</h1>
-        <p className="page-subtitle">Отсюда водитель подтверждает забор и доставку.</p>
+        <p className="page-subtitle">Экран водителя для подтверждения забора и доставки.</p>
       </article>
       <article className="surface p-5">
         <Table
@@ -48,8 +49,8 @@ export function DriverBatchesPage() {
             { key: 'type', title: 'Тип', render: (item) => item.waste_type },
             { key: 'quantity', title: 'Количество', render: (item) => item.quantity },
             { key: 'pickup', title: 'Адрес вывоза', render: (item) => item.pickup_point },
-            { key: 'status', title: 'Статус', render: (item) => <StatusBadge status={item.statuses[item.statuses.length - 1]?.state ?? 'CREATED'} /> },
-            { key: 'updated', title: 'Обновлено', render: (item) => formatDateTime(item.statuses[item.statuses.length - 1]?.time ?? null) },
+            { key: 'status', title: 'Статус', render: (item) => <StatusBadge status={getBatchLatestStatus(item)} /> },
+            { key: 'updated', title: 'Обновлено', render: (item) => formatDateTime(getBatchLatestStatusTime(item)) },
             {
               key: 'action',
               title: 'Действие',

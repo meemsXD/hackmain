@@ -1,6 +1,11 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+admin.site.site_header = 'MedWaste Admin'
+admin.site.site_title = 'MedWaste Admin Portal'
+admin.site.index_title = 'Управление системой учета медотходов'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -11,3 +16,6 @@ urlpatterns = [
     path('api/v1/batches/', include('apps.batches.urls')),
     path('api/v1/audit/', include('apps.audit.urls')),
 ]
+
+# Keep admin static assets available in local/dev runs.
+urlpatterns += staticfiles_urlpatterns()

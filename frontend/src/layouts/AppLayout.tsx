@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { TEXTS } from '@/app/constants/texts';
 import { Button, Drawer } from '@/components/ui';
@@ -15,7 +15,6 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/app/profile', label: 'Профиль' },
-  { to: '/app/profile/roles', label: 'Мои заявки на роли' },
   { to: '/app/educator/batches', label: 'Партии', roles: ['RECYCLER'] },
   { to: '/app/educator/reports', label: 'Отчеты', roles: ['RECYCLER'] },
   { to: '/app/driver/access', label: 'Доступ по коду', roles: ['DRIVER'] },
@@ -42,11 +41,11 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-brand-100 bg-white/85 backdrop-blur">
+      <header className="border-b border-brand-100/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-4 py-3 md:px-6">
           <div>
             <p className="font-heading text-lg text-brand-900">{TEXTS.appName}</p>
-            <p className="text-xs text-brand-700">MVP интерфейс для ролей и журналов</p>
+            <p className="text-xs text-brand-700">Единый контур движения медицинских отходов</p>
           </div>
           <div className="hidden items-center gap-2 md:flex">
             {roles.map((role) => (
@@ -62,11 +61,11 @@ export function AppLayout() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1320px] gap-4 px-4 py-4 md:grid-cols-[280px_1fr] md:px-6">
+      <div className="mx-auto grid max-w-[1320px] gap-4 px-4 py-4 md:grid-cols-[290px_1fr] md:px-6">
         <aside className="surface hidden h-fit p-3 md:block">
-          <div className="mb-4 rounded-xl bg-brand-50 p-3">
+          <div className="mb-4 rounded-2xl bg-brand-50 p-3">
             <p className="text-xs uppercase tracking-wide text-brand-700">Пользователь</p>
-            <p className="mt-1 font-semibold text-brand-900">{user?.full_name ?? '—'}</p>
+            <p className="mt-1 font-semibold text-brand-900">{user?.full_name ?? '-'}</p>
             <p className="text-sm text-brand-700">{user?.login ?? ''}</p>
           </div>
           <nav className="space-y-1">
@@ -155,3 +154,4 @@ export function AppLayout() {
     </div>
   );
 }
+

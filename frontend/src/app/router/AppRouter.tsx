@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+﻿import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthGuard } from '@/auth/AuthGuard';
 import { RoleGuard } from '@/auth/RoleGuard';
 import { useAuth } from '@/auth/useAuth';
@@ -8,7 +8,6 @@ import { LoginPage } from '@/pages/public/LoginPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
 import { DriverAccessTokenPage } from '@/pages/public/DriverAccessTokenPage';
 import { ProfilePage } from '@/pages/common/ProfilePage';
-import { RoleRequestsPage } from '@/pages/common/RoleRequestsPage';
 import { EducatorBatchesPage } from '@/pages/educator/EducatorBatchesPage';
 import { EducatorBatchNewPage } from '@/pages/educator/EducatorBatchNewPage';
 import { EducatorBatchDetailPage } from '@/pages/educator/EducatorBatchDetailPage';
@@ -39,11 +38,13 @@ export function AppRouter() {
         <Route element={<AppLayout />}>
           <Route index element={<HomeRedirect />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="profile/roles" element={<RoleRequestsPage />} />
+          <Route path="profile/roles" element={<Navigate to="/app/profile" replace />} />
 
           <Route path="educator" element={<RoleGuard allow={['RECYCLER']} />}>
             <Route path="batches" element={<EducatorBatchesPage />} />
             <Route path="batches/new" element={<EducatorBatchNewPage />} />
+            <Route path="batches/add" element={<Navigate to="/app/educator/batches/new" replace />} />
+            <Route path="batches/create" element={<Navigate to="/app/educator/batches/new" replace />} />
             <Route path="batches/:id" element={<EducatorBatchDetailPage />} />
             <Route path="reports" element={<EducatorReportsPage />} />
           </Route>
@@ -72,3 +73,5 @@ export function AppRouter() {
     </Routes>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import type { BatchStatus } from '@/api/types';
+﻿import type { BatchStatus } from '@/api/types';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { formatDateTime } from '@/utils/date';
 
@@ -23,6 +23,7 @@ export function BatchTimeline({ statuses }: BatchTimelineProps) {
               <div className="flex items-center gap-2">
                 <StatusBadge status={status.state} />
                 <span className="text-xs text-brand-600">{formatDateTime(status.time)}</span>
+                {status.changed_by ? <span className="text-xs text-brand-500">user:{status.changed_by}</span> : null}
               </div>
             </li>
           ))}

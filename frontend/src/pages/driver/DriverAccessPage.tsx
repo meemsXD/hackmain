@@ -1,47 +1,51 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+﻿import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { listAllBatches } from '@/api/batches';
-import type { WasteBatch } from '@/api/types';
-import { isExpired } from '@/utils/date';
+import { scanQrCode } from '@/api/batches';
+import { getApiErrorMessage } from '@/api/client';
+import type { BatchQr, WasteBatch } from '@/api/types';
+import { formatDateTime } from '@/utils/date';
+import { getBatchLatestStatus, getQrExpiry } from '@/utils/batches';
 import { StatusBadge } from '@/components/shared';
 import { Button, ErrorState, Input } from '@/components/ui';
 
 export function DriverAccessPage() {
+  const [searchParams] = useSearchParams();
+  const codeFromUrl = searchParams.get('code')?.trim() ?? '';
+
   const [code, setCode] = useState('');
   const [foundBatch, setFoundBatch] = useState<WasteBatch | null>(null);
+  const [scannedQr, setScannedQr] = useState<BatchQr | null>(null);
   const [error, setError] = useState('');
+  const [autoChecked, setAutoChecked] = useState(false);
 
   const checkMutation = useMutation({
-    mutationFn: async (value: string) => {
-      const all = await listAllBatches(12);
-      return all.find((item) => item.qr?.code === value) ?? null;
-    },
-    onSuccess: (batch) => {
-      if (!batch) {
-        setError('Партия по этому коду не найдена.');
-        setFoundBatch(null);
-        return;
-      }
-      if (!batch.qr || !batch.qr.is_active || isExpired(batch.qr.time)) {
-        setError('Код найден, но срок доступа истек.');
-        setFoundBatch(batch);
-        return;
-      }
+    mutationFn: (value: string) => scanQrCode({ code: value }),
+    onSuccess: (response) => {
       setError('');
-      setFoundBatch(batch);
+      setFoundBatch(response.batch);
+      setScannedQr(response.qr);
     },
-    onError: () => {
-      setError('Не удалось проверить код. Попробуйте еще раз.');
+    onError: (requestError) => {
+      setError(getApiErrorMessage(requestError));
       setFoundBatch(null);
+      setScannedQr(null);
     },
   });
+
+  useEffect(() => {
+    if (!autoChecked && codeFromUrl) {
+      setCode(codeFromUrl);
+      checkMutation.mutate(codeFromUrl);
+      setAutoChecked(true);
+    }
+  }, [autoChecked, checkMutation, codeFromUrl]);
 
   return (
     <section className="space-y-4">
       <article className="surface p-5">
-        <h1 className="page-title">Доступ по коду</h1>
-        <p className="page-subtitle">Вставьте код из QR, чтобы открыть активную партию.</p>
+        <h1 className="page-title">Доступ по QR-коду</h1>
+        <p className="page-subtitle">Введите код из QR, чтобы открыть карточку партии в рамках срока действия токена.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
           <Input label="Код доступа" value={code} onChange={(event) => setCode(event.target.value)} placeholder="Введите код из QR..." />
           <Button onClick={() => checkMutation.mutate(code.trim())} loading={checkMutation.isPending} disabled={!code.trim()}>
@@ -50,7 +54,7 @@ export function DriverAccessPage() {
         </div>
       </article>
 
-      {error ? <ErrorState title="Проверка кода" description={error} /> : null}
+      {error ? <ErrorState title="Проверка QR" description={error} /> : null}
 
       {foundBatch ? (
         <article className="surface p-5">
@@ -66,8 +70,11 @@ export function DriverAccessPage() {
               <span className="font-semibold">Адрес вывоза:</span> {foundBatch.pickup_point}
             </p>
             <p>
+              <span className="font-semibold">Срок QR:</span> {formatDateTime(getQrExpiry(scannedQr ?? foundBatch.qr))}
+            </p>
+            <p>
               <span className="font-semibold">Статус:</span>{' '}
-              <StatusBadge status={foundBatch.statuses[foundBatch.statuses.length - 1]?.state ?? 'CREATED'} />
+              <StatusBadge status={getBatchLatestStatus(foundBatch)} />
             </p>
           </div>
           <div className="mt-4">
