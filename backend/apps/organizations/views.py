@@ -9,8 +9,16 @@ class OrganizationListCreateView(generics.ListCreateAPIView):
     serializer_class = OrganizationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return super().get_permissions()
+
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:
+            return Organization.objects.all().order_by('name')
+
         if user.role in {'ADMIN', 'INSPECTOR'} or user.is_superuser:
             return Organization.objects.all().order_by('name')
 

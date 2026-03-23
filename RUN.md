@@ -44,3 +44,10 @@ npm run dev -- --host 0.0.0.0 --port 5173
 ## Логин в админку
 
 - `admin@example.com` / `admin12345`
+
+## Демо-пользователи
+
+- `admin@example.com` / `admin12345` (администратор)
+- `educator@example.com` / `educator12345` (образователь)
+- `processor@example.com` / `processor12345` (переработчик)
+- `driver@example.com` / `driver12345` (водитель)
