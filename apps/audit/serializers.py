@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import AuditLog
 
+
 class AuditLogSerializer(serializers.ModelSerializer):
     user_email = serializers.CharField(source='user.login', read_only=True)
 

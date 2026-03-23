@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Waste, Status, QR, QRScanLog
 
+
 @admin.register(Waste)
 class WasteAdmin(admin.ModelAdmin):
     list_display = [
@@ -19,6 +20,7 @@ class WasteAdmin(admin.ModelAdmin):
     list_select_related = ['medical_organization', 'delivery_point', 'created_by']
     ordering = ['-id']
 
+
 @admin.register(Status)
 class StatusAdmin(admin.ModelAdmin):
     list_display = ['id', 'waste', 'state', 'time', 'changed_by']
@@ -28,6 +30,7 @@ class StatusAdmin(admin.ModelAdmin):
     list_select_related = ['waste', 'changed_by']
     ordering = ['-time']
 
+
 @admin.register(QR)
 class QRAdmin(admin.ModelAdmin):
     list_display = ['id', 'code', 'waste', 'expires_at', 'is_active', 'created_by']
@@ -36,6 +39,7 @@ class QRAdmin(admin.ModelAdmin):
     autocomplete_fields = ['waste', 'created_by']
     list_select_related = ['waste', 'created_by']
     ordering = ['-id']
+
 
 @admin.register(QRScanLog)
 class QRScanLogAdmin(admin.ModelAdmin):

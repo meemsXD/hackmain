@@ -109,9 +109,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name='Профиль переработчика',
     )
 
-    USERNAME_FIELD  = 'login'
+    USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = []
-    objects         = UserManager()
+    objects = UserManager()
 
     class Meta:
         db_table = 'user'

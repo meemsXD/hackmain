@@ -9,7 +9,7 @@ from .models import Waste, Status, QR, QRScanLog
 
 class StatusSerializer(serializers.ModelSerializer):
     class Meta:
-        model  = Status
+        model = Status
         fields = ['id', 'state', 'time', 'waste', 'changed_by']
 
 
@@ -17,16 +17,16 @@ class QRSerializer(serializers.ModelSerializer):
     is_expired = serializers.BooleanField(read_only=True)
 
     class Meta:
-        model  = QR
+        model = QR
         fields = ['id', 'waste', 'code', 'expires_at', 'is_active', 'created_by', 'is_expired']
 
 
 class WasteSerializer(serializers.ModelSerializer):
     statuses = StatusSerializer(many=True, read_only=True)
-    qr  = QRSerializer(read_only=True)
+    qr = QRSerializer(read_only=True)
 
     class Meta:
-        model  = Waste
+        model = Waste
         fields = ['id', 'waste_type', 'quantity', 'medical_organization',
                   'pickup_point', 'delivery_point', 'statuses', 'qr', 'current_status', 'created_by']
 
@@ -41,7 +41,7 @@ class WasteCreateSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model  = Waste
+        model = Waste
         fields = [
             'waste_type',
             'quantity',

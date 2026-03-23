@@ -8,7 +8,7 @@ class Organization(models.Model):
     name = models.CharField(max_length=255, verbose_name='Название')
 
     class Meta:
-        db_table        = 'org'
+        db_table = 'org'
         unique_together = ('inn', 'kpp')
 
     def __str__(self):
