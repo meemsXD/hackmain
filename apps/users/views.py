@@ -176,7 +176,12 @@ class ProcessorDriverAssignView(ProcessorDriverAccessMixin, APIView):
         recycler = self._resolve_recycler(request)
         driver = get_object_or_404(DriverProfile.objects.select_related('user'), pk=driver_id)
 
-        if request.user.role == 'MEDICAL' and driver.user_id and request.user.organization_id and driver.user.organization_id:
+        if (
+            request.user.role == 'MEDICAL'
+            and driver.user_id
+            and request.user.organization_id
+            and driver.user.organization_id
+        ):
             if request.user.organization_id != driver.user.organization_id:
                 raise PermissionDenied('Нельзя привязать водителя из другой организации.')
 
@@ -189,5 +194,11 @@ class ProcessorDriverAssignView(ProcessorDriverAccessMixin, APIView):
         driver = get_object_or_404(DriverProfile, pk=driver_id)
 
         recycler.drivers.remove(driver)
-        log(request.user, 'processor_driver_unassigned', 'driver_profile', driver.id, after={'recycler_id': recycler.id})
+        log(
+            request.user,
+            'processor_driver_unassigned',
+            'driver_profile',
+            driver.id,
+            after={'recycler_id': recycler.id},
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)

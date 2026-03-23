@@ -194,7 +194,9 @@ class ProcessorDriverCreateSerializer(serializers.Serializer):
 
         has_auth_payload = bool(full_name or login or password)
         if has_auth_payload and not (full_name and login and password):
-            raise serializers.ValidationError('Для создания учетной записи водителя укажите full_name, login и password полностью.')
+            raise serializers.ValidationError(
+                'Для создания учетной записи водителя укажите full_name, login и password полностью.'
+            )
 
         attrs['full_name'] = full_name
         attrs['login'] = login

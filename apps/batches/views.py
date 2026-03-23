@@ -111,7 +111,11 @@ def _assert_batch_access(user, waste: Waste):
         if user.recycler_profile_id == waste.delivery_point_id:
             return
 
-    if user.role == 'DRIVER' and user.driver_profile_id and waste.delivery_point.drivers.filter(id=user.driver_profile_id).exists():
+    if (
+        user.role == 'DRIVER'
+        and user.driver_profile_id
+        and waste.delivery_point.drivers.filter(id=user.driver_profile_id).exists()
+    ):
         if not user.organization_id:
             return
         if _delivery_point_owner_org_id(waste) == user.organization_id:

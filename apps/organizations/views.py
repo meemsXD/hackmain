@@ -22,7 +22,7 @@ class OrganizationListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         user = self.request.user
         if user.role != 'ADMIN' and not user.is_superuser:
-            raise PermissionDenied('Создавать организации может только администратор.')
+            raise PermissionDenied('Only admin can create organizations.')
         serializer.save()
 
 
@@ -43,11 +43,11 @@ class OrganizationDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         user = self.request.user
         if user.role != 'ADMIN' and not user.is_superuser:
-            raise PermissionDenied('Изменять организации может только администратор.')
+            raise PermissionDenied('Only admin can update organizations.')
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
         if user.role != 'ADMIN' and not user.is_superuser:
-            raise PermissionDenied('Удалять организации может только администратор.')
+            raise PermissionDenied('Only admin can delete organizations.')
         instance.delete()

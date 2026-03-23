@@ -3,7 +3,15 @@ from .models import Waste, Status, QR, QRScanLog
 
 @admin.register(Waste)
 class WasteAdmin(admin.ModelAdmin):
-    list_display = ['id', 'waste_type', 'quantity', 'medical_organization', 'delivery_point', 'current_status', 'created_by']
+    list_display = [
+        'id',
+        'waste_type',
+        'quantity',
+        'medical_organization',
+        'delivery_point',
+        'current_status',
+        'created_by',
+    ]
     list_filter = ['current_status', 'waste_type', 'medical_organization', 'delivery_point']
     search_fields = ['waste_type', 'pickup_point', 'id']
     readonly_fields = ['current_status', 'created_by']

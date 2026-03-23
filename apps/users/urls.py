@@ -18,5 +18,9 @@ urlpatterns = [
     path('me', MeView.as_view(), name='me'),
     path('recyclers', RecyclerListView.as_view(), name='recyclers'),
     path('processor/drivers', ProcessorDriverListCreateView.as_view(), name='processor-drivers'),
-    path('processor/drivers/<int:driver_id>/assign', ProcessorDriverAssignView.as_view(), name='processor-driver-assign'),
+    path(
+        'processor/drivers/<int:driver_id>/assign',
+        ProcessorDriverAssignView.as_view(),
+        name='processor-driver-assign',
+    ),
 ]

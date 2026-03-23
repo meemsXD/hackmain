@@ -44,7 +44,11 @@ class Command(BaseCommand):
             kpp='123456789',
             defaults={'name': 'Клиника №1'},
         )
-        proc_org, _ = Organization.objects.get_or_create(inn='0987654321', kpp='987654321', defaults={'name': 'Переработчик ООО'})
+        proc_org, _ = Organization.objects.get_or_create(
+            inn='0987654321',
+            kpp='987654321',
+            defaults={'name': 'Переработчик ООО'},
+        )
 
         edu_user, created = User.objects.get_or_create(login='educator1', defaults={
             'full_name': 'Иванов Иван Иванович', 'role': 'RECYCLER', 'organization': edu_org,

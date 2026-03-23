@@ -1,13 +1,11 @@
 from django.db import models
 from django.utils import timezone
-from django.utils import timezone
-from datetime import timedelta
 
 from apps.users.models import MedicalOrganization, Recycler
 
 
 class Waste(models.Model):
-    """ОТХОДЫ: id, тип, кол-во, образователь, точка вывоза, точка доставки"""
+    """Waste batch entity."""
 
     STATUS_CHOICES = [
         ('CREATED',    'Создана'),
@@ -136,7 +134,7 @@ class QR(models.Model):
 
 
 class QRScanLog(models.Model):
-    """Лог сканирований QR — в том числе заблокированных попыток."""
+    """Log of QR scans, including blocked attempts."""
 
     qr = models.ForeignKey(
         QR,

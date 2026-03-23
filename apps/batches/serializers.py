@@ -32,11 +32,24 @@ class WasteSerializer(serializers.ModelSerializer):
 
 
 class WasteCreateSerializer(serializers.ModelSerializer):
-    qr_expires_hours = serializers.IntegerField(min_value=1, max_value=168, required=False, default=24, write_only=True)
+    qr_expires_hours = serializers.IntegerField(
+        min_value=1,
+        max_value=168,
+        required=False,
+        default=24,
+        write_only=True,
+    )
 
     class Meta:
         model  = Waste
-        fields = ['waste_type', 'quantity', 'medical_organization', 'pickup_point', 'delivery_point', 'qr_expires_hours']
+        fields = [
+            'waste_type',
+            'quantity',
+            'medical_organization',
+            'pickup_point',
+            'delivery_point',
+            'qr_expires_hours',
+        ]
 
     @staticmethod
     def _generate_qr_code() -> str:
