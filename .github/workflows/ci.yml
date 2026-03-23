@@ -48,18 +48,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r backend/requirements.txt
           pip install flake8
 
       - name: Lint (flake8)
         run: |
-          flake8 apps/ --max-line-length=120 --exclude=migrations
+          flake8 backend/apps/ --max-line-length=120 --exclude=migrations
 
       - name: Run migrations
-        run: python manage.py migrate
+        run: python backend/manage.py migrate
 
       - name: Run tests
-        run: python manage.py test apps
+        run: python backend/manage.py test apps
 
   deploy:
     name: Deploy

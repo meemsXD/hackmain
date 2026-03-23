@@ -3,7 +3,7 @@
 ## 1) Запустить Postgres с постоянным volume
 
 ```bash
-cd /mnt/c/Users/vsmyk/Downloads/project/verhoviya_project
+cd /mnt/d/projects/verh/hackmain
 ./scripts/start_postgres.sh
 ```
 
@@ -15,8 +15,10 @@ cd /mnt/c/Users/vsmyk/Downloads/project/verhoviya_project
 ## 2) Запустить backend
 
 ```bash
-cd /mnt/c/Users/vsmyk/Downloads/project/verhoviya_project
-source .venv_linux/bin/activate
+cd /mnt/d/projects/verh/hackmain/backend
+python -m venv ../.venv
+source ../.venv/bin/activate
+pip install -r requirements.txt
 cp .env.example .env 2>/dev/null || true
 python manage.py migrate
 python manage.py ensure_admin_access --set-superuser
@@ -27,7 +29,7 @@ python manage.py runserver 0.0.0.0:8001
 ## 3) Запустить frontend
 
 ```bash
-cd /mnt/c/Users/vsmyk/Downloads/project/verhoviya_project/frontend
+cd /mnt/d/projects/verh/hackmain/frontend
 cp .env.example .env 2>/dev/null || true
 npm install
 npm run dev -- --host 0.0.0.0 --port 5173

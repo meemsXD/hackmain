@@ -29,3 +29,7 @@ frontend/vite.config.js
 frontend/vite.config.d.ts
 frontend/.env.local
 frontend/.env.*.local
+
+# Backend artifacts
+backend/staticfiles/
+backend/media/
