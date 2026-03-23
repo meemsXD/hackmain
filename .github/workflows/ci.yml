@@ -66,12 +66,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check deploy secrets
+        id: deploy_config
+        run: |
+          if [ -n "$SERVER_HOST" ] && [ -n "$SERVER_USER" ] && [ -n "$SERVER_SSH_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Deploy skipped: SERVER_HOST/SERVER_USER/SERVER_SSH_KEY is not configured."
+          fi
+
       - name: Deploy via SSH
+        if: steps.deploy_config.outputs.enabled == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -83,3 +98,7 @@ jobs:
             docker compose down
             docker compose up --build -d
             docker compose exec -T backend python manage.py migrate
+
+      - name: Deploy skipped
+        if: steps.deploy_config.outputs.enabled != 'true'
+        run: echo "No deploy secrets configured, job finished without deploy."
