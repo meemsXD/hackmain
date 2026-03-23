@@ -27,10 +27,14 @@ jobs:
           --health-retries 5
 
     env:
-      SECRET_KEY: ci-secret-key-not-for-production
-      DEBUG: "1"
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
-      ALLOWED_HOSTS: "*"
+      DJANGO_SECRET_KEY: ci-secret-key-not-for-production
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: "*"
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
 
     steps:
       - name: Checkout
